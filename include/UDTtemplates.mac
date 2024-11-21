@@ -112,23 +112,32 @@ MAP_COMP_OPS( AxS, a)
 
 #define TAKE_VxA( a)                                                           \
 inline                                                                         \
-a[*] take( int[.] v, a[*] array)                                               \
+a[n:v, m:ishp] take(a[n] v, a[n:oshp, m:ishp] array)                           /
+/******************************************************************************
+* Take without restrictions, takes the first v elements of the given array.
+* In case v has a negative number, the last |v| elements will be given instead.
+* Extra elements are noted as a 0.
+*******************************************************************************/
 {                                                                              \
-  vext = _cat_VxV_( v, _drop_SxV_( _sel_VxA_( [0],_shape_A_( v)),shape( array)));\
-  start = ArrayTransform::where( ArrayArith::<( vext, 0),                      \
-            ArrayArith::max( ArrayArith::-( _add_VxV_( shape(array), vext)),0),\
+  // Start shows the index of the first element to be selected.                \
+  start = ArrayTransform::where( ArrayArith::<( v, 0),                         \
+            _add_VxV_( oshp, v),                                               \
             0);                                                                \
-  stop = ArrayTransform::where( ArrayArith::<(vext, 0),                        \
-           ArrayArith::abs(vext),                                              \
-           ArrayArith::min( ArrayArith::abs(vext), shape(array)));             \
-  offset = ArrayTransform::where( ArrayArith::<( vext, 0),                     \
-             _add_VxV_( shape(array), vext),                                   \
-             0);                                                               \
-  res = with {                                                                 \
-          ( start <= iv < stop ) : sel( _add_VxV_( offset, iv), array);        \
-        } : genarray( ArrayArith::abs(vext), zero(array) );                    \
-  return( res);                                                                \
-}
+  // Stop signals the index of the last element to be selected.                \
+  // Note that stop is not neccessarily equal to said index, as                \
+  // start can be negative.                                                    \
+  stop = ArrayTransform::where( ArrayArith::<(v, 0),                           \
+           ArrayArith::abs(v),                                                 \
+           ArrayArith::min( ArrayArith::abs(v), oshp));                        \
+  // The result is calculated in 3 steps:                                      \
+  res = {iv -> genarray(ishp, zero(array)) | iv < _neg_V_(start);              \
+         // 1: prepend zeros (if needed)                                       \
+         iv -> sel( _add_VxV_( start, iv), array) | iv < stop;                 \
+         // 2: select the required elements of the array                       \
+         iv -> genarray(ishp, zero(array)) | iv < ArrayArith::abs(v)};         \
+         // 3: add zeros at the end (if needed)                                \
+  return(res);                                                                 \
+}                                                                              \
 
 #define TAKE( a)                                                               \
 TAKE_VxA( a)
