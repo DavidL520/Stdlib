@@ -202,24 +202,20 @@ TILE_VxVxA( a)
 
 #define CAT_AxA( a)                                                            \
 inline                                                                         \
-a[+] ++( a[+] arr_a, a[+] arr_b)                                               \
+a[oshp, n:ishp] ++ ( a[oshp_a, n:ishp] arr_a, a[oshp_b, n:ishp] arr_b)         \
+//******************************************************************************
+// The classic concatenate. Appends the array b to the array a.
+//******************************************************************************
 {                                                                              \
-  new_shp = _modarray_AxVxS_( shape( arr_a),                                   \
-                              [0],                                             \
-                              _add_SxS_( _sel_VxA_([0], shape( arr_a)),        \
-                                         _sel_VxA_([0], shape( arr_b)) ) );    \
-  res = with {                                                                 \
-          ( _mul_SxV_(0, new_shp) <= iv < shape( arr_a) ) : sel( iv, arr_a);   \
-        } : genarray( new_shp, zero( arr_a ) );                                \
-  offset =  _modarray_AxVxS_( _mul_SxV_( 0, new_shp),                          \
-                        [0],                                                   \
-                        _sel_VxA_([0], shape( arr_a)) );                       \
-  res = with {                                                                 \
-          ( offset <= iv < shape(res) )                                        \
-          : sel( _sub_VxV_( iv, offset), arr_b);                               \
-        } : modarray( res );                                                   \
+  // Calculate the resulting shape.                                            \
+  oshp = _add_SxS_(oshp_a, oshp_b);                                            \
+  // The result is calculated in 2 steps:                                      \
+  res = {// 1: take array a.                                                   \
+         [i] -> arr_a[i] | [i] < [oshp_a];                                     \
+         // 2: append array b.                                                 \
+         [i] -> arr_b[ _sub_SxS_(i, oshp_a)] | [i] < [oshp]};                  \
   return( res);                                                                \
-}
+}                                                                              \
 
 #define CAT( a)                                                                \
 CAT_AxA( a)
