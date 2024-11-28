@@ -172,11 +172,26 @@ DROP_VxA( a)
 
 #define TILE_VxVxA( a)                                                         \
 inline                                                                         \
-a[*] tile( int[.] shp, int[.] idx, a[*] array)                                 \
+
+a[n:shp] tile( int[n] shp, int[n] idx, a[n:shp_a] array)                       \
+| _all_V_( _ge_VxS_(shp, 0))                                                   \
+//******************************************************************************
+// Takes shp elements of the given array, starting at idx. Elements outside
+// of the array are marked as a zero.
+//****************************************************************************** 
 {                                                                              \
-  res = with {                                                                 \
-          ( . <= iv <= . ) : sel( _add_VxV_( idx, iv), array);                 \
-        } : genarray( shp, zero(array) );                                      \
+  // Start shows how many elements we prepend before the array.                \
+  start = ArrayTransform::where( _lt_VxS_(idx, 0),                             \
+           _abs_V_(idx),                                                       \
+           0);                                                                 \
+  // Stop shows where our selection of the given array ends, or, in case       \
+  // the selection goes beyond the array, where the array ends.                \
+  stop = _min_VxV_(shp, _sub_VxV_(shp_a, idx));                                \
+  // The result is calculated in 2 steps:                                      \
+  res = {// 1: select the required elements of the array                       \
+         iv -> array[ _add_VxV_(idx, iv)] | start <= iv < stop;                \
+         // 2: add zeros around (if needed)                                    \
+         iv -> zero(array) | iv < shp};                                        \
   return( res);                                                                \
 }
 
