@@ -146,21 +146,24 @@ TAKE_VxA( a)
 
 #define DROP_VxA( a)                                                           \
 inline                                                                         \
-a[*] drop( int[.] v, a[*] array)                                               \
+a[n:shp_res, m:ishp] drop( int[n] v, a[n:oshp, m:ishp] array)                  \
+//******************************************************************************
+// The classic drop, removes the first v elements of the given array.
+// In case v has a negative number, the last |v| elements will be removed instead.
+// For |v| larger than oshp, an array of shape (n:zeroes, m:ishp) will be returned,
+// Which, of course, has no data.
+// Similar to take(-v, array).
+//******************************************************************************                           
 {                                                                              \
-  vext = _cat_VxV_( v,                                                         \
-                    ArrayBasics::genarray( [_sub_SxS_( dim( array),            \
-                                             _sel_VxA_( [0], _shape_A_( v)))], \
-                                           0));                                \
-  new_shp = _sub_VxV_( shape( array), ArrayArith::abs( vext));                 \
-  new_shp = ArrayTransform::where( new_shp ArrayArith::< 0, 0, new_shp);       \
-  offset = ArrayTransform::where( vext ArrayArith::< 0, 0, vext);              \
-  offset = ArrayTransform::where( offset ArrayArith::< shape( array), offset, 0);\
-  res = with {                                                                 \
-          ( . <= iv <= . ) : sel( _add_VxV_( offset, iv), array);              \
-        } : genarray( new_shp, zero(array) );                                  \
-  return( res);                                                                \
-}
+  // Calculate shape of result array.                                          \
+  shp_res = _sub_VxV_(oshp, _abs_V_(v));                                       \
+  shp_res = ArrayTransform::where( _lt_VxS_(shp_res, 0), 0, shp_res);          \
+  // Start shows the index of the first element to be selected.                \
+  start = ArrayTransform::where( _lt_VxS_(v, 0), 0, v);                        \
+  // Select the requested elements of array.                                   \
+  res = { iv -> array[_add_VxV_( start, iv)] | iv < shp_res };                 \
+  return(res);                                                                 \
+}                                                                              \
 
 #define DROP( a)                                                               \
 DROP_VxA( a)
