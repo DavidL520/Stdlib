@@ -224,14 +224,16 @@ CAT_AxA( a)
 
 #define REVERSE_A( a)                                                          \
 inline                                                                         \
-a[+] reverse( a[+] arr_a)                                                      \
+a[oshp, n:ishp] reverse( a[oshp, n:ishp] array)                                \
+//******************************************************************************
+// The classic reverse. Reverses the given array over the outermost dimension.
+//******************************************************************************
 {                                                                              \
-  maxidx0 = _sub_SxS_( _sel_VxA_( [0], shape( arr_a)), 1);                     \
-  res = with {                                                                 \
-          ( [0] <= iv = [i] <= [maxidx0] ) : arr_a[[_sub_SxS_(maxidx0, i)]];   \
-        } : modarray( arr_a );                                                 \
+  // Stop shows the index of the last element of array.                        \
+  stop = _sub_SxS_(oshp, 1);                                                   \
+  res = {[i] -> array[_sub_SxS_(stop, i)] | [i] < [oshp]};                     \
   return( res);                                                                \
-}
+}                                                                              \
 
 #define REVERSE( a)                                                            \
 REVERSE_A( a)
